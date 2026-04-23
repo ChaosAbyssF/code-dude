@@ -1,0 +1,7 @@
+interface:
+  display_name: "Code Dude"
+  short_description: "Structured repo automation workflow"
+  default_prompt: "Use $code-dude to drive this repository toward a configured engineering goal with verifier-based iteration and reporting."
+
+policy:
+  allow_implicit_invocation: true
