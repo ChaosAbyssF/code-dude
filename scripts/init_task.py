@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Initialize a project-local .code-dude workspace."""
+"""Initialize a task workspace under .code-dude/tasks with real starter files."""
 
 from __future__ import annotations
 
@@ -45,44 +45,62 @@ cleanup:
   keep_recent_trials: 5
 """
 
-USER_PROFILE_TEMPLATE = """# User Profile
+TASK_SCENARIO_TEMPLATE = """# Scenario Model
 
-## Stable Preferences
+## Objective
 
-- None recorded yet.
+- Summarize the task in operational terms.
 
-## Persistent Constraints
+## Repository Shape
 
-- None recorded yet.
+- Note the relevant modules, binaries, services, or subsystems.
 
-## Forbidden Actions
+## Success Criteria
+
+- Record what will count as done.
+
+## Risks And Unknowns
+
+- List the main uncertainties, gaps, or likely failure modes.
+
+## Validation Plan
+
+- Start with the cheapest meaningful checks.
+- Prefer targeted validation before the overall verifier.
+- Note whether the user already supplied enough context to avoid an exploratory full-project run.
+"""
+
+TASK_STATUS_TEMPLATE = """# Current Status
+
+## Phase
+
+- Not started.
+
+## Latest Result
+
+- No runs recorded yet.
+
+## Next Step
+
+- Identify the smallest meaningful change or validation step.
+"""
+
+TASK_UNRESOLVED_TEMPLATE = """# Unresolved Issues
+
+## Active Issues
 
 - None recorded yet.
 
 ## Notes
 
-- Update this file only when a user message reveals a stable preference, persistent constraint, recurring priority, or clearly forbidden action.
+- Add blockers, regressions, open questions, or gaps that still affect the task.
 """
-
-DIRECTORIES = [
-    "lessons",
-    "project-notes",
-    "tasks",
-]
-
-
-FILES = {
-    "lessons/.gitkeep": "",
-    "project-notes/.gitkeep": "",
-    "tasks/.gitkeep": "",
-    "tasks/.task-config-template.yaml": TASK_CONFIG_TEMPLATE,
-    "user-profile.md": USER_PROFILE_TEMPLATE,
-}
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", default=".", help="Target repository root.")
+    parser.add_argument("--task-id", required=True, help="Task id directory name to create.")
     parser.add_argument(
         "--force",
         action="store_true",
@@ -93,28 +111,28 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    target_root = Path(args.root).resolve() / ".code-dude"
+    workspace = Path(args.root).resolve() / ".code-dude" / "tasks" / args.task_id
+    reports_dir = workspace / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
 
     copied = []
     skipped = []
 
-    target_root.mkdir(parents=True, exist_ok=True)
+    files = {
+        workspace / "config.yaml": TASK_CONFIG_TEMPLATE,
+        workspace / "scenario-model.md": TASK_SCENARIO_TEMPLATE,
+        workspace / "current-status.md": TASK_STATUS_TEMPLATE,
+        workspace / "unresolved-issues.md": TASK_UNRESOLVED_TEMPLATE,
+    }
 
-    for relative in DIRECTORIES:
-        destination = target_root / relative
-        destination.mkdir(parents=True, exist_ok=True)
-
-    for relative, content in FILES.items():
-        destination = target_root / relative
-        destination.parent.mkdir(parents=True, exist_ok=True)
+    for destination, content in files.items():
         if destination.exists() and not args.force:
             skipped.append(str(destination))
             continue
-
         destination.write_text(content, encoding="utf-8")
         copied.append(str(destination))
 
-    print(f"initialized: {target_root}")
+    print(f"initialized task workspace: {workspace}")
     if copied:
         print("copied:")
         for item in copied:

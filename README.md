@@ -42,12 +42,11 @@ code-dude/
 │   ├── .task-config-template.yaml
 │   └── <task-id>/
 │       ├── config.yaml
-│       ├── current-status/
+│       ├── current-status.md
 │       ├── reports/
-│       ├── scenario-models/
-│       └── unresolved-issues/
-└── user-profile/
-    └── .gitkeep
+│       ├── scenario-model.md
+│       └── unresolved-issues.md
+└── user-profile.md
 ```
 
 任务完成并得到用户明确确认后，对应目录应重命名为 `tasks/<task-id>_done/`。
@@ -62,7 +61,13 @@ python3 /path/to/code-dude/scripts/init_project.py --root .
 
 该脚本会直接创建目录结构并写入默认占位文件，不再依赖仓库内的模板目录。
 
-然后创建任务目录并填写 `.code-dude/tasks/<task-id>/config.yaml`，至少补充：
+然后创建任务目录并写入真实任务文件初始内容：
+
+```bash
+python3 /path/to/code-dude/scripts/init_task.py --root . --task-id 20260424_fix_login_bug
+```
+
+再填写 `.code-dude/tasks/<task-id>/config.yaml`，至少补充：
 
 - `goal.summary`
 - `goal.success_definition`
@@ -82,12 +87,13 @@ python3 /path/to/code-dude/scripts/init_project.py --root .
 
 1. Codex 读取配置和仓库，确定或创建当前任务目录并建立场景理解
 2. 直接修改相关代码并运行验证
-3. 持续更新当前任务目录下的 `current-status` 和 `unresolved-issues`，并把经验教训沉淀到根目录的 `lessons/`，把仓库背景信息沉淀到 `project-notes/`
+3. 持续更新当前任务目录下的 `current-status.md` 和 `unresolved-issues.md`，并把经验教训沉淀到根目录的 `lessons/`，把仓库背景信息沉淀到 `project-notes/`
 4. 达成目标后生成简洁报告，并在用户明确确认完成时把任务目录重命名为 `<task-id>_done`
 
 ## 辅助脚本
 
 - `scripts/init_project.py`: 初始化项目侧 `.code-dude/`
+- `scripts/init_task.py`: 初始化某个任务工作区及其实际 markdown 文件
 - `scripts/check_verifier.py`: 检查验证入口是否支持隔离实验目录
 - `scripts/manage_trials.py`: 汇总实验目录并给出清理建议
 - `scripts/render_report.py`: 生成最终报告草稿

@@ -56,5 +56,7 @@ Guidance:
 - `attention_points` is the place for project-specific caveats.
 - The current user request should come from the active conversation, not be duplicated in config.
 - Shared lessons should live under `.code-dude/lessons/`, while task-progress state should stay inside the task workspace.
+- Shared user preferences should live in `.code-dude/user-profile.md`.
 - Task-specific notes should live under a task workspace like `.code-dude/tasks/20260424_fix_login_bug/`.
+- Prefer task-local markdown files such as `scenario-model.md`, `current-status.md`, and `unresolved-issues.md` instead of creating one-file directories for them.
 - Once the user explicitly confirms completion, rename that task workspace to `.code-dude/tasks/20260424_fix_login_bug_done/`.

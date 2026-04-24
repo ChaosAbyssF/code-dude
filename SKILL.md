@@ -13,28 +13,31 @@ This skill standardizes a project-local workspace, normally rooted at `.code-dud
 
 - `lessons/`: shared mistakes, debugging heuristics, and reusable lessons learned across tasks
 - `project-notes/`: shared repository context, execution hints, and other cross-task notes
-- `user-profile/`: shared notes about stable user preferences, especially forbidden actions
+- `user-profile.md`: shared notes about stable user preferences, especially forbidden actions
 - `tasks/<task-id>/`: one workspace per materially distinct active task
 - `tasks/<task-id>_done/`: a completed task workspace after the user has confirmed the task is done
 
 Each task workspace should contain:
 
 - `config.yaml`: user-maintained goal, environment, verification entrypoint, and task caveats
-- `scenario-models/`: Codex-written understanding of the task and repository
-- `current-status/`: concise current state, latest attempt, and next step
-- `unresolved-issues/`: one markdown file per open problem
+- `scenario-model.md`: Codex-written understanding of the task and repository
+- `current-status.md`: concise current state, latest attempt, and next step
+- `unresolved-issues.md`: open blockers, gaps, regressions, and still-open questions for the task
 - `reports/`: final task reports and milestone summaries
+
+Prefer these as single markdown files instead of tiny directories. When creating a new task workspace, create these real files directly with starter content instead of creating separate template markdown files.
 
 ## First pass
 
 Before making meaningful changes:
 
 1. Determine the active task workspace under `.code-dude/tasks/`. Reuse an existing active task directory if the request is a continuation; otherwise create a new date-prefixed task id such as `.code-dude/tasks/20260424_fix_login_bug/`.
-2. Ensure the active task workspace contains `config.yaml`, then read it.
+2. Ensure the active task workspace contains `config.yaml`, `scenario-model.md`, `current-status.md`, and `unresolved-issues.md`. If any are missing, create the real file with sensible starter content, then read it.
 3. Read the active repository and the user's current request together. Treat the conversation as the source of truth for the current request instead of duplicating it in config.
-4. Produce or update a scenario model in the active task workspace.
-5. Inspect the verification entrypoint from the task-local config before running it.
-6. Check task-local unresolved issues and current status together with shared lessons, project notes, and user profile notes for relevant context.
+4. After reading the user's message, explicitly consider whether it reveals a stable preference that belongs in shared `.code-dude/user-profile.md`. This review is required on every user turn, including the first one, even when no update is needed.
+5. Produce or update `scenario-model.md` in the active task workspace.
+6. Inspect the verification entrypoint from the task-local config before running it.
+7. Check task-local `unresolved-issues.md` and `current-status.md` together with shared lessons, project notes, and `user-profile.md` for relevant context.
 
 The first scenario model should cover:
 
@@ -53,17 +56,17 @@ After that first pass, move quickly into code changes. Do not default to only ed
 For active implementation work, follow this loop:
 
 1. Re-state the working objective internally from the task-local config plus the user request.
-2. Inspect relevant code and prior notes from the active task workspace, shared lessons, shared project notes, and shared user profile.
+2. Inspect relevant code and prior notes from the active task workspace, shared lessons, shared project notes, and shared `user-profile.md`.
 3. Do not default to running the project just to observe the current state when the user has already provided enough signal. Use the user's report, logs, stack traces, baseline metrics, expected behavior, and code inspection first. Only do an exploratory run when that missing information is necessary and the cost is justified.
 4. Make the smallest changes that move the objective forward.
 5. Prefer the cheapest meaningful validation first:
    - run a small-unit compile, targeted test, or other narrow check around the changed code
    - use broader builds only when the narrow check passes or cannot prove the requirement
 6. Run the configured verifier after targeted validation, or sooner only when no smaller trustworthy check exists.
-7. After every run or verification attempt, update at least one maintained memory location with the outcome. Valid targets include task-local `current-status/`, task-local `unresolved-issues/`, shared `.code-dude/lessons/`, and shared `.code-dude/project-notes/`. Do not finish a run and leave all of them untouched.
+7. After every run or verification attempt, update at least one maintained memory location with the outcome. Valid targets include task-local `current-status.md`, task-local `unresolved-issues.md`, shared `.code-dude/lessons/`, and shared `.code-dude/project-notes/`. Do not finish a run and leave all of them untouched.
 8. Record outcomes in the most appropriate places:
-   - update `current-status/` for latest phase, result, and next step
-   - update `unresolved-issues/` when the run exposes a blocker, gap, regression, or still-open question
+   - update `current-status.md` for latest phase, result, and next step
+   - update `unresolved-issues.md` when the run exposes a blocker, gap, regression, or still-open question
    - update shared `lessons/` when the run teaches a reusable debugging or validation lesson
    - update shared `project-notes/` when the run reveals reusable repository facts, setup quirks, or safe operating guidance
 9. Repeat until the goal is satisfied or the remaining blocker requires user input.
@@ -103,7 +106,7 @@ If the user provides only an overall verifier and the repository does not expose
 
 Place this helper in a reasonable project-local location that matches the repo's conventions. Keep it narrow, cheap to run, and directly tied to the edited behavior. Do not create throwaway files outside the repository's normal structure when a proper test or build target can be added instead.
 
-If creating such a targeted check would require a disproportionate amount of scaffolding, document that fact in the scenario model or lessons and fall back to the smallest existing trustworthy validation before the full verifier.
+If creating such a targeted check would require a disproportionate amount of scaffolding, document that fact in `scenario-model.md` or shared lessons and fall back to the smallest existing trustworthy validation before the full verifier.
 
 Likewise, do not add an exploratory baseline run if the user already supplied the baseline or current-state evidence needed for the task. For optimization, regression analysis, or behavior-adjustment work, prefer the user-provided baseline plus narrow code-aware validation over rerunning the whole system just to confirm what the user already told you.
 
@@ -168,7 +171,7 @@ After a run, update `project-notes/` when you learn something that future tasks 
 
 ## User modeling
 
-Maintain lightweight notes in `.code-dude/user-profile/` about stable user preferences that should persist across tasks, for example:
+Maintain lightweight notes in `.code-dude/user-profile.md` about stable user preferences that should persist across tasks, for example:
 
 - preferred experiment naming
 - tolerance for intrusive refactors
@@ -177,6 +180,8 @@ Maintain lightweight notes in `.code-dude/user-profile/` about stable user prefe
 - actions or command classes the user has explicitly forbidden
 
 Infer these preferences during normal interaction instead of interrogating the user for them. Only record stable preferences that help future work. Do not store secrets.
+
+After every user message, explicitly consider whether `user-profile.md` should be updated. Do not force a write on every turn, but do not skip the review step. Update it when the user reveals a stable preference, a persistent constraint, a recurring priority, or a clearly stated forbidden action that future tasks should remember.
 
 ## Final reporting
 
@@ -201,6 +206,12 @@ python3 code-dude/scripts/init_project.py --root /path/to/repo
 
 If running from inside the target repository, `--root .` is usually enough.
 
+When creating a new task workspace, initialize it with:
+
+```bash
+python3 code-dude/scripts/init_task.py --root /path/to/repo --task-id 20260424_fix_login_bug
+```
+
 ## Files to read selectively
 
 - For config field semantics, read `references/config-schema.md`.
@@ -213,8 +224,9 @@ If running from inside the target repository, `--root .` is usually enough.
 - For large repositories, prefer targeted compile or test commands before full builds and end-to-end verifier runs.
 - If no suitable targeted check exists, add one in the normal test or build structure when practical, then use it during the edit loop.
 - When the user already provides sufficient baseline or current-state evidence, do not spend time on an initial exploratory run of the whole project.
-- After every run, update at least one of `current-status/`, `unresolved-issues/`, shared `lessons/`, or shared `project-notes/`.
-- Keep unresolved issues as separate files, one issue per file.
+- After every run, update at least one of `current-status.md`, `unresolved-issues.md`, shared `lessons/`, or shared `project-notes/`.
+- After every user message, explicitly consider whether shared `user-profile.md` should be updated.
+- Keep `scenario-model.md`, `current-status.md`, and `unresolved-issues.md` as markdown files in the task workspace instead of creating tiny one-file directories.
 - Use date-prefixed names for both task directories and task-local files when practical.
 - When a task is explicitly confirmed complete by the user, rename its directory to append `_done`.
 - When environment details are incomplete, infer cautiously from the repository, then surface the gap.

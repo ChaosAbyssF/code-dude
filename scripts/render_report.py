@@ -24,7 +24,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def newest_markdown(path: Path) -> list[Path]:
-    if not path.exists():
+    if not path.exists() or not path.is_dir():
         return []
     return sorted(path.glob("*.md"), key=lambda item: item.stat().st_mtime, reverse=True)
 
@@ -37,6 +37,17 @@ def first_paragraph(path: Path) -> str:
         return "_Empty_"
     blocks = [block.strip() for block in text.split("\n\n") if block.strip()]
     return blocks[0] if blocks else "_Empty_"
+
+
+def first_paragraph_from_file_or_dir(path: Path) -> str:
+    if path.is_file():
+        return first_paragraph(path)
+
+    entries = newest_markdown(path)
+    if entries:
+        return first_paragraph(entries[0])
+
+    return "_None_"
 
 
 def read_config_lines(workspace: Path) -> list[str]:
@@ -136,15 +147,18 @@ def main() -> int:
     root = Path(args.root).resolve()
     workspace = root / ".code-dude"
     task_workspace = resolve_task_workspace(root, workspace, args.task_dir)
-    scenario_dir = task_workspace / "scenario-models"
-    issues_dir = task_workspace / "unresolved-issues"
-    status_dir = task_workspace / "current-status"
+    scenario_path = task_workspace / "scenario-model.md"
+    issues_path = task_workspace / "unresolved-issues.md"
+    status_path = task_workspace / "current-status.md"
     reports_dir = task_workspace / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
 
-    scenarios = newest_markdown(scenario_dir)
-    issues = newest_markdown(issues_dir)
-    statuses = newest_markdown(status_dir)
+    if not scenario_path.exists():
+        scenario_path = task_workspace / "scenario-models"
+    if not issues_path.exists():
+        issues_path = task_workspace / "unresolved-issues"
+    if not status_path.exists():
+        status_path = task_workspace / "current-status"
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output = reports_dir / f"{timestamp}_task_report.md"
@@ -158,7 +172,7 @@ def main() -> int:
         "",
         "## Repository Understanding",
         "",
-        first_paragraph(scenarios[0]) if scenarios else "_No scenario model found._",
+        first_paragraph_from_file_or_dir(scenario_path),
         "",
         "## Task Workspace",
         "",
@@ -166,13 +180,17 @@ def main() -> int:
         "",
         "## Current Status",
         "",
-        first_paragraph(statuses[0]) if statuses else "_No current status file found._",
+        first_paragraph_from_file_or_dir(status_path),
         "",
         "## Changes Made",
         "",
-        first_paragraph(statuses[0]) if statuses else "_No change summary found._",
+        first_paragraph_from_file_or_dir(status_path),
         "",
-        "## Verification",
+        "## Targeted Validation",
+        "",
+        first_paragraph_from_file_or_dir(status_path),
+        "",
+        "## Overall Verifier",
         "",
         verification_summary(task_workspace),
         "",
@@ -180,10 +198,7 @@ def main() -> int:
         "",
     ]
 
-    if issues:
-        lines.extend([f"- {item.name}" for item in issues[:10]])
-    else:
-        lines.append("_No unresolved issue files found._")
+    lines.append(first_paragraph_from_file_or_dir(issues_path))
 
     output.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(output)
