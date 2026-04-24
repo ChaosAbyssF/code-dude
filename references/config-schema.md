@@ -17,6 +17,7 @@ verification:
   expected_artifact_root: "./runs"
   notes:
     - "Verifier usually writes TryXX_* directories"
+    - "This is usually the final end-to-end verifier, not necessarily the first validation step"
 
 runtime:
   type: "local"  # one of: local, remote, container, remote_container
@@ -47,7 +48,9 @@ Guidance:
 
 - `goal.summary` should be short and concrete.
 - `goal.success_definition` should describe what the verifier should prove.
-- `verification.entrypoint` should be the actual command entry file or script.
+- `verification.entrypoint` should be the actual command entry file or script for the authoritative overall success check.
+- Codex should still look for or create smaller validation commands when the repository is large or the verifier is expensive.
+- If the user already provides sufficient baseline or current-state evidence, Codex should not default to an exploratory full-project run before editing.
 - `verification.expected_artifact_root` should point to the parent directory where run outputs are created, if applicable.
 - `runtime.type` controls how Codex should think about command execution.
 - `attention_points` is the place for project-specific caveats.

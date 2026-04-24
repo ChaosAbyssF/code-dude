@@ -40,6 +40,8 @@ The first scenario model should cover:
 
 - user goal in operational terms
 - current repository shape
+- project scale and validation cost, especially whether full builds or end-to-end runs are slow or expensive
+- whether the user has already provided enough baseline, reproduction detail, logs, metrics, or expected behavior to avoid an initial exploratory run
 - likely success criteria
 - known risks and unknowns
 - intended edit and validation loop
@@ -52,15 +54,22 @@ For active implementation work, follow this loop:
 
 1. Re-state the working objective internally from the task-local config plus the user request.
 2. Inspect relevant code and prior notes from the active task workspace, shared lessons, shared project notes, and shared user profile.
-3. Make the smallest changes that move the objective forward.
-4. Build or run the project as needed.
-5. Run the configured verifier.
-6. Record outcomes in shared lessons and task-local unresolved issues.
-7. Update the active task workspace `current-status/` with the current phase, latest result, and next step.
-8. Repeat until the goal is satisfied or the remaining blocker requires user input.
+3. Do not default to running the project just to observe the current state when the user has already provided enough signal. Use the user's report, logs, stack traces, baseline metrics, expected behavior, and code inspection first. Only do an exploratory run when that missing information is necessary and the cost is justified.
+4. Make the smallest changes that move the objective forward.
+5. Prefer the cheapest meaningful validation first:
+   - run a small-unit compile, targeted test, or other narrow check around the changed code
+   - use broader builds only when the narrow check passes or cannot prove the requirement
+6. Run the configured verifier after targeted validation, or sooner only when no smaller trustworthy check exists.
+7. Record outcomes in shared lessons and task-local unresolved issues.
+8. Update the active task workspace `current-status/` with the current phase, latest result, and next step.
+9. Repeat until the goal is satisfied or the remaining blocker requires user input.
 
 Always prefer evidence from the verifier over intuition.
 Do not stop to present a proposed implementation plan to the user unless user confirmation is actually required.
+
+For large or slow repositories, treat small-unit validation as the default path. Signs include expensive compile times, heavy dependency graphs, large test suites, or verifier scripts that run end-to-end workflows. In those cases, avoid using the full verifier as the first feedback loop unless the task itself is inherently end-to-end.
+
+Treat user-provided evidence as the primary starting point across bug fixes and other change requests. If the user already provides a bug description, baseline numbers, regression symptoms, target behavior, or comparison results, do not spend time on an initial full-project run just to recreate that context unless the missing information is blocking and the run cost is justified.
 
 ## Stop condition
 
@@ -71,6 +80,28 @@ If the user confirms that the task is complete, rename the task workspace from `
 ## Verifier policy
 
 The task-local `config.yaml` contains `verification.entrypoint`. Treat it as the source of truth for success checks unless the user explicitly overrides it.
+
+That entrypoint is the final or authoritative success check, not automatically the first check to run. Before using it heavily, identify whether the repository already has smaller validation surfaces such as:
+
+- package- or module-level builds
+- focused unit or integration tests
+- single-binary or single-target compilation commands
+- reduced fixtures, smoke tests, or minimal reproductions
+
+When the repository is large, complex, or slow, prefer those smaller checks first and use the configured verifier afterward to confirm end-to-end success.
+
+If the user provides only an overall verifier and the repository does not expose a suitable small-unit check, Codex should create one when practical. Typical examples:
+
+- add a focused unit test near the changed module
+- add a minimal regression test for the reported failure mode or changed behavior
+- add a lightweight build target, script, or harness that compiles only the affected component
+- add a small fixture or smoke script in the repository's normal test location
+
+Place this helper in a reasonable project-local location that matches the repo's conventions. Keep it narrow, cheap to run, and directly tied to the edited behavior. Do not create throwaway files outside the repository's normal structure when a proper test or build target can be added instead.
+
+If creating such a targeted check would require a disproportionate amount of scaffolding, document that fact in the scenario model or lessons and fall back to the smallest existing trustworthy validation before the full verifier.
+
+Likewise, do not add an exploratory baseline run if the user already supplied the baseline or current-state evidence needed for the task. For optimization, regression analysis, or behavior-adjustment work, prefer the user-provided baseline plus narrow code-aware validation over rerunning the whole system just to confirm what the user already told you.
 
 Before repeated runs, inspect that entrypoint and determine whether it supports isolated experiment output directories. A good verifier usually:
 
@@ -145,6 +176,7 @@ When the task reaches a natural checkpoint or completion, create a report in the
 
 - objective
 - what changed
+- targeted validation runs and outcomes
 - verifier runs and outcomes
 - remaining unresolved issues
 - concise action summary only
@@ -170,6 +202,9 @@ If running from inside the target repository, `--root .` is usually enough.
 ## Practical defaults
 
 - Prefer incremental edits over broad refactors.
+- For large repositories, prefer targeted compile or test commands before full builds and end-to-end verifier runs.
+- If no suitable targeted check exists, add one in the normal test or build structure when practical, then use it during the edit loop.
+- When the user already provides sufficient baseline or current-state evidence, do not spend time on an initial exploratory run of the whole project.
 - Keep unresolved issues as separate files, one issue per file.
 - Use date-prefixed names for both task directories and task-local files when practical.
 - When a task is explicitly confirmed complete by the user, rename its directory to append `_done`.

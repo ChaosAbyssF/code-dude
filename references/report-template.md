@@ -11,7 +11,9 @@ Suggested report sections:
 
 ## Changes Made
 
-## Verification
+## Targeted Validation
+
+## Overall Verifier
 
 ## Remaining Issues
 ```
