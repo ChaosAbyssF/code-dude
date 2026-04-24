@@ -38,10 +38,6 @@ runtime:
 attention_points:
   - "Do not change public API signatures"
 
-scenario:
-  current_request: ""
-  tags: []
-
 tracking:
   unresolved_issues_dir: ".code-dude/unresolved-issues"
   scenario_models_dir: ".code-dude/scenario-models"
@@ -63,5 +59,6 @@ Guidance:
 - `verification.expected_artifact_root` should point to the parent directory where run outputs are created, if applicable.
 - `runtime.type` controls how Codex should think about command execution.
 - `attention_points` is the place for project-specific caveats.
+- The current user request should come from the active conversation, not be duplicated in config.
 - `tracking.*` may be kept at defaults unless the project needs a different layout.
 - `tracking.current_status_dir` should contain short rolling notes instead of long historical logs.

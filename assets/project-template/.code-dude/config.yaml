@@ -31,10 +31,6 @@ runtime:
 attention_points:
   - "List important constraints here"
 
-scenario:
-  current_request: ""
-  tags: []
-
 tracking:
   unresolved_issues_dir: ".code-dude/unresolved-issues"
   scenario_models_dir: ".code-dude/scenario-models"

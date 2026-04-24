@@ -24,7 +24,7 @@ This skill standardizes a project-local workspace, normally rooted at `.code-dud
 Before making meaningful changes:
 
 1. Read `.code-dude/config.yaml`.
-2. Read the active repository and the user's current request together.
+2. Read the active repository and the user's current request together. Treat the conversation as the source of truth for the current request instead of duplicating it in config.
 3. Produce or update a scenario model in `.code-dude/scenario-models/`.
 4. Inspect the verification entrypoint from config before running it.
 5. Check unresolved issues, lessons, current status, and user profile notes for relevant context.
