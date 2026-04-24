@@ -60,8 +60,12 @@ For active implementation work, follow this loop:
    - run a small-unit compile, targeted test, or other narrow check around the changed code
    - use broader builds only when the narrow check passes or cannot prove the requirement
 6. Run the configured verifier after targeted validation, or sooner only when no smaller trustworthy check exists.
-7. Record outcomes in shared lessons and task-local unresolved issues.
-8. Update the active task workspace `current-status/` with the current phase, latest result, and next step.
+7. After every run or verification attempt, update at least one maintained memory location with the outcome. Valid targets include task-local `current-status/`, task-local `unresolved-issues/`, shared `.code-dude/lessons/`, and shared `.code-dude/project-notes/`. Do not finish a run and leave all of them untouched.
+8. Record outcomes in the most appropriate places:
+   - update `current-status/` for latest phase, result, and next step
+   - update `unresolved-issues/` when the run exposes a blocker, gap, regression, or still-open question
+   - update shared `lessons/` when the run teaches a reusable debugging or validation lesson
+   - update shared `project-notes/` when the run reveals reusable repository facts, setup quirks, or safe operating guidance
 9. Repeat until the goal is satisfied or the remaining blocker requires user input.
 
 Always prefer evidence from the verifier over intuition.
@@ -146,6 +150,8 @@ Write concise markdown entries in `.code-dude/lessons/`. Review relevant lessons
 
 Shared lessons should capture mistakes, failed approaches, and debugging heuristics that may help future tasks in the same repository. Keep purely task-progress notes out of this directory.
 
+After a run, update `lessons/` when the result teaches something reusable beyond the current task. Do not force every run into `lessons/`, but do not skip all memory updates either.
+
 ## Shared project notes
 
 Maintain lightweight notes in `.code-dude/project-notes/` for information that is useful across multiple tasks in the same repository, for example:
@@ -157,6 +163,8 @@ Maintain lightweight notes in `.code-dude/project-notes/` for information that i
 - assumptions that future tasks should not rediscover
 
 Do not duplicate task progress here. Keep it focused on reusable repository context.
+
+After a run, update `project-notes/` when you learn something that future tasks in the same repository should reuse, such as verifier quirks, environment constraints, or module ownership boundaries.
 
 ## User modeling
 
@@ -205,6 +213,7 @@ If running from inside the target repository, `--root .` is usually enough.
 - For large repositories, prefer targeted compile or test commands before full builds and end-to-end verifier runs.
 - If no suitable targeted check exists, add one in the normal test or build structure when practical, then use it during the edit loop.
 - When the user already provides sufficient baseline or current-state evidence, do not spend time on an initial exploratory run of the whole project.
+- After every run, update at least one of `current-status/`, `unresolved-issues/`, shared `lessons/`, or shared `project-notes/`.
 - Keep unresolved issues as separate files, one issue per file.
 - Use date-prefixed names for both task directories and task-local files when practical.
 - When a task is explicitly confirmed complete by the user, rename its directory to append `_done`.
