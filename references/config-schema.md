@@ -1,6 +1,6 @@
 # Config Schema
 
-The project-local config lives at `.code-dude/config.yaml`.
+Each task-local config lives at `.code-dude/tasks/<task-id>/config.yaml`.
 
 Recommended shape:
 
@@ -38,14 +38,6 @@ runtime:
 attention_points:
   - "Do not change public API signatures"
 
-tracking:
-  unresolved_issues_dir: ".code-dude/unresolved-issues"
-  scenario_models_dir: ".code-dude/scenario-models"
-  current_status_dir: ".code-dude/current-status"
-  lessons_dir: ".code-dude/lessons"
-  user_profile_dir: ".code-dude/user-profile"
-  reports_dir: ".code-dude/reports"
-
 cleanup:
   trial_cleanup_threshold: 15
   keep_recent_trials: 5
@@ -60,5 +52,6 @@ Guidance:
 - `runtime.type` controls how Codex should think about command execution.
 - `attention_points` is the place for project-specific caveats.
 - The current user request should come from the active conversation, not be duplicated in config.
-- `tracking.*` may be kept at defaults unless the project needs a different layout.
-- `tracking.current_status_dir` should contain short rolling notes instead of long historical logs.
+- Shared lessons should live under `.code-dude/lessons/`, while task-progress state should stay inside the task workspace.
+- Task-specific notes should live under a task workspace like `.code-dude/tasks/20260424_fix_login_bug/`.
+- Once the user explicitly confirms completion, rename that task workspace to `.code-dude/tasks/20260424_fix_login_bug_done/`.

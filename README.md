@@ -11,8 +11,9 @@
 
 ## 主要能力
 
-- 用 `.code-dude/config.yaml` 统一描述目标、验证入口、环境和注意事项
-- 在 `.code-dude/` 下维护场景建模、当前状态、未解决问题、经验记录和最终报告
+- 用任务目录内的 `config.yaml` 描述该任务的目标、验证入口、环境和注意事项
+- 在 `.code-dude/` 下区分共享信息与任务工作区，避免多任务时互相污染
+- 在根目录长期积累仓库级共享信息，而不是把这类信息混进单个任务记录里
 - 检查验证脚本是否支持独立实验输出目录
 - 汇总实验目录并给出清理建议
 - 根据用户偏好调整执行方式，尤其记录用户明确禁止的操作
@@ -24,7 +25,6 @@ code-dude/
 ├── SKILL.md
 ├── README.md
 ├── agents/
-├── assets/project-template/.code-dude/
 ├── references/
 └── scripts/
 ```
@@ -33,14 +33,24 @@ code-dude/
 
 ```text
 .code-dude/
-├── config.yaml
-├── current-status/
 ├── lessons/
-├── reports/
-├── scenario-models/
-├── unresolved-issues/
+│   └── .gitkeep
+├── project-notes/
+│   └── .gitkeep
+├── tasks/
+│   ├── .gitkeep
+│   ├── .task-config-template.yaml
+│   └── <task-id>/
+│       ├── config.yaml
+│       ├── current-status/
+│       ├── reports/
+│       ├── scenario-models/
+│       └── unresolved-issues/
 └── user-profile/
+    └── .gitkeep
 ```
+
+任务完成并得到用户明确确认后，对应目录应重命名为 `tasks/<task-id>_done/`。
 
 ## 初始化项目工作区
 
@@ -50,7 +60,9 @@ code-dude/
 python3 /path/to/code-dude/scripts/init_project.py --root .
 ```
 
-然后填写 `.code-dude/config.yaml`，至少补充：
+该脚本会直接创建目录结构并写入默认占位文件，不再依赖仓库内的模板目录。
+
+然后创建任务目录并填写 `.code-dude/tasks/<task-id>/config.yaml`，至少补充：
 
 - `goal.summary`
 - `goal.success_definition`
@@ -63,15 +75,15 @@ python3 /path/to/code-dude/scripts/init_project.py --root .
 安装到 `~/.codex/skills/code-dude` 后，可以在和 Codex 的对话里直接提到：
 
 ```text
-使用 $code-dude 处理这个仓库，目标写在 .code-dude/config.yaml 里。
+使用 $code-dude 处理这个仓库，目标写在当前任务目录的 config.yaml 里。
 ```
 
 典型流程是：
 
-1. Codex 读取配置和仓库，建立场景理解
+1. Codex 读取配置和仓库，确定或创建当前任务目录并建立场景理解
 2. 直接修改相关代码并运行验证
-3. 持续更新 `current-status`、`lessons` 和 `unresolved-issues`
-4. 达成目标后生成简洁报告
+3. 持续更新当前任务目录下的 `current-status` 和 `unresolved-issues`，并把经验教训沉淀到根目录的 `lessons/`，把仓库背景信息沉淀到 `project-notes/`
+4. 达成目标后生成简洁报告，并在用户明确确认完成时把任务目录重命名为 `<task-id>_done`
 
 ## 辅助脚本
 

@@ -1,0 +1,39 @@
+version: 1
+
+goal:
+  summary: "Improve the code-dude skill repository and keep its helper scripts usable"
+  success_definition: "The targeted change is implemented and the configured verification command completes successfully in this repository."
+
+verification:
+  entrypoint: "python3 code-dude/scripts/check_verifier.py code-dude/scripts/render_report.py"
+  working_directory: "."
+  expected_artifact_root: "./.code-dude/tasks"
+  notes:
+    - "This repo is a Codex skill, so verification is script-oriented rather than a full app test suite."
+    - "The sample verifier checks whether render_report.py appears compatible with isolated task outputs."
+
+runtime:
+  type: "local"
+  local:
+    shell: "bash"
+  remote:
+    ssh_user: ""
+    ssh_host: ""
+    workspace: ""
+  container:
+    name: ""
+    workspace: ""
+  remote_container:
+    ssh_user: ""
+    ssh_host: ""
+    container_name: ""
+    workspace: ""
+
+attention_points:
+  - "Keep the documented task workspace layout under .code-dude/ consistent with README.md and config-schema.md."
+  - "Prefer incremental edits to scripts and references; avoid broad structural refactors unless the verifier or docs require them."
+  - "If a task needs trial directories, verify the command can separate outputs per run before repeated execution."
+
+cleanup:
+  trial_cleanup_threshold: 15
+  keep_recent_trials: 5

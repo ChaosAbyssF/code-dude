@@ -1,12 +1,66 @@
 #!/usr/bin/env python3
-"""Initialize a project-local .code-dude workspace from the bundled template."""
+"""Initialize a project-local .code-dude workspace."""
 
 from __future__ import annotations
 
 import argparse
-import shutil
-import sys
 from pathlib import Path
+
+
+TASK_CONFIG_TEMPLATE = """version: 1
+
+goal:
+  summary: "Describe the objective"
+  success_definition: "Describe what the verifier should prove when the task is done"
+
+verification:
+  entrypoint: "./path/to/verify.sh"
+  working_directory: "."
+  expected_artifact_root: "./runs"
+  notes:
+    - "Describe expected output naming if known"
+
+runtime:
+  type: "local"
+  local:
+    shell: "bash"
+  remote:
+    ssh_user: ""
+    ssh_host: ""
+    workspace: ""
+  container:
+    name: ""
+    workspace: ""
+  remote_container:
+    ssh_user: ""
+    ssh_host: ""
+    container_name: ""
+    workspace: ""
+
+attention_points:
+  - "List important constraints here"
+
+cleanup:
+  trial_cleanup_threshold: 15
+  keep_recent_trials: 5
+"""
+
+
+DIRECTORIES = [
+    "lessons",
+    "project-notes",
+    "tasks",
+    "user-profile",
+]
+
+
+FILES = {
+    "lessons/.gitkeep": "",
+    "project-notes/.gitkeep": "",
+    "tasks/.gitkeep": "",
+    "tasks/.task-config-template.yaml": TASK_CONFIG_TEMPLATE,
+    "user-profile/.gitkeep": "",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -22,31 +76,25 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    script_dir = Path(__file__).resolve().parent
-    template_root = script_dir.parent / "assets" / "project-template" / ".code-dude"
     target_root = Path(args.root).resolve() / ".code-dude"
-
-    if not template_root.exists():
-        print(f"template not found: {template_root}", file=sys.stderr)
-        return 1
 
     copied = []
     skipped = []
 
-    for source in sorted(template_root.rglob("*")):
-        relative = source.relative_to(template_root)
+    target_root.mkdir(parents=True, exist_ok=True)
+
+    for relative in DIRECTORIES:
         destination = target_root / relative
+        destination.mkdir(parents=True, exist_ok=True)
 
-        if source.is_dir():
-            destination.mkdir(parents=True, exist_ok=True)
-            continue
-
+    for relative, content in FILES.items():
+        destination = target_root / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         if destination.exists() and not args.force:
             skipped.append(str(destination))
             continue
 
-        shutil.copy2(source, destination)
+        destination.write_text(content, encoding="utf-8")
         copied.append(str(destination))
 
     print(f"initialized: {target_root}")
