@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -13,7 +14,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root", default=".", help="Target repository root.")
     parser.add_argument(
         "--task-dir",
-        help="Task workspace directory, relative to repo root or absolute. Defaults to the newest directory under .code-dude/tasks.",
+        help="Task workspace directory, relative to repo root or absolute. Defaults to the newest active directory for report rendering.",
     )
     parser.add_argument(
         "--title",
@@ -69,9 +70,21 @@ def section_scalar(lines: list[str], section: str, key: str) -> str | None:
             in_section = line.strip() == section_prefix
             continue
         if in_section and line.startswith(key_prefix):
-            value = line.split(":", 1)[1].strip().strip("\"'")
-            return value or None
+            value = line.split(":", 1)[1].strip()
+            return decode_scalar(value)
     return None
+
+
+def decode_scalar(value: str) -> str | None:
+    if not value:
+        return None
+    if value[0] in {"'", '"'}:
+        try:
+            parsed = json.loads(value)
+            return str(parsed) if parsed is not None else None
+        except json.JSONDecodeError:
+            return value.strip("\"'") or None
+    return value
 
 
 def objective_summary(task_workspace: Path) -> str:

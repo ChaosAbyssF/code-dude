@@ -46,8 +46,8 @@ cleanup:
 
 Guidance:
 
-- `goal.summary` should be short and concrete.
-- `goal.success_definition` should describe what the verifier should prove.
+- `goal.summary` should be short, concrete, and useful when scanning existing tasks.
+- `goal.success_definition` should describe what the verifier should prove and should help distinguish this task from nearby tasks.
 - `verification.entrypoint` should be the actual command entry file or script for the authoritative overall success check.
 - Codex should still look for or create smaller validation commands when the repository is large or the verifier is expensive.
 - If the user already provides sufficient baseline or current-state evidence, Codex should not default to an exploratory full-project run before editing.
@@ -55,6 +55,7 @@ Guidance:
 - `runtime.type` controls how Codex should think about command execution.
 - `attention_points` is the place for project-specific caveats.
 - The current user request should come from the active conversation, not be duplicated in config.
+- Before choosing or creating a task workspace, Codex should scan `.code-dude/tasks/` and compare the current request with each active task's goal, scenario model, current status, and unresolved issues.
 - Shared lessons should live under `.code-dude/lessons/`, while task-progress state should stay inside the task workspace.
 - Shared user preferences should live in `.code-dude/user-profile.md`.
 - Task-specific notes should live under a task workspace like `.code-dude/tasks/20260424_fix_login_bug/`.

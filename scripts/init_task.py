@@ -4,14 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 
 TASK_CONFIG_TEMPLATE = """version: 1
 
 goal:
-  summary: "Describe the objective"
-  success_definition: "Describe what the verifier should prove when the task is done"
+  summary: {summary}
+  success_definition: {success_definition}
 
 verification:
   entrypoint: "./path/to/verify.sh"
@@ -102,6 +103,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root", default=".", help="Target repository root.")
     parser.add_argument("--task-id", required=True, help="Task id directory name to create.")
     parser.add_argument(
+        "--summary",
+        default="Describe the objective",
+        help="Initial goal.summary value to write into config.yaml.",
+    )
+    parser.add_argument(
+        "--success-definition",
+        default="Describe what the verifier should prove when the task is done",
+        help="Initial goal.success_definition value to write into config.yaml.",
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="Overwrite existing files when they conflict.",
@@ -117,9 +128,13 @@ def main() -> int:
 
     copied = []
     skipped = []
+    config_content = TASK_CONFIG_TEMPLATE.format(
+        summary=json.dumps(args.summary),
+        success_definition=json.dumps(args.success_definition),
+    )
 
     files = {
-        workspace / "config.yaml": TASK_CONFIG_TEMPLATE,
+        workspace / "config.yaml": config_content,
         workspace / "scenario-model.md": TASK_SCENARIO_TEMPLATE,
         workspace / "current-status.md": TASK_STATUS_TEMPLATE,
         workspace / "unresolved-issues.md": TASK_UNRESOLVED_TEMPLATE,

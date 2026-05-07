@@ -27,11 +27,26 @@ Each task workspace should contain:
 
 Prefer these as single markdown files instead of tiny directories. When creating a new task workspace, create these real files directly with starter content instead of creating separate template markdown files.
 
+## Task selection
+
+At the start of using this skill in a repository, first scan `.code-dude/tasks/` when it exists. Read the task directory names and the most relevant task-local files before deciding what workspace to use:
+
+- `config.yaml`
+- `scenario-model.md`
+- `current-status.md`
+- `unresolved-issues.md`
+
+Prefer reusing an active task directory when the current request is materially the same task as an existing one. Use the goal, success definition, current status, unresolved issues, and the user's current request as the matching evidence.
+
+Do not reuse a task directory just because it is the newest one. If the match is unclear, create a new date-prefixed task id and note the uncertainty in `scenario-model.md`. Treat directories ending in `_done` as historical context only unless the user explicitly asks to reopen or continue that completed task.
+
+Use `scripts/list_tasks.py` when available to summarize task workspaces quickly, then inspect the relevant task files directly before relying on the summary.
+
 ## First pass
 
 Before making meaningful changes:
 
-1. Determine the active task workspace under `.code-dude/tasks/`. Reuse an existing active task directory if the request is a continuation; otherwise create a new date-prefixed task id such as `.code-dude/tasks/20260424_fix_login_bug/`.
+1. Determine the active task workspace under `.code-dude/tasks/`. Scan the existing task list first. Reuse an existing active task directory only when the current request is materially the same task; otherwise create a new date-prefixed task id such as `.code-dude/tasks/20260424_fix_login_bug/`.
 2. Ensure the active task workspace contains `config.yaml`, `scenario-model.md`, `current-status.md`, and `unresolved-issues.md`. If any are missing, create the real file with sensible starter content, then read it.
 3. Read the active repository and the user's current request together. Treat the conversation as the source of truth for the current request instead of duplicating it in config.
 4. After reading the user's message, explicitly consider whether it reveals a stable preference that belongs in shared `.code-dude/user-profile.md`. This review is required on every user turn, including the first one, even when no update is needed.
@@ -51,6 +66,17 @@ The first scenario model should cover:
 
 After that first pass, move quickly into code changes. Do not default to only editing config files or launch scripts unless that is genuinely the right fix. In normal cases, once the repository is understood well enough, directly modify the relevant code and validate.
 
+## Bug fix reproduction policy
+
+When the current task is a bug fix, first consider the cheapest trustworthy way to reproduce the failure before editing implementation code. Good reproduction surfaces include:
+
+- an existing focused failing test
+- a new narrow regression test near the affected module
+- a small fixture or smoke script in the repository's normal test location
+- a minimal command that exercises the failing path
+
+For large repositories or expensive verifiers, prefer this minimal reproduction as the inner edit loop, then run the configured verifier after the narrow check passes. If the user already provided a precise failing test, stack trace, reproduction command, or other sufficient evidence, use that evidence directly and do not spend time inventing another reproduction. If adding a focused reproduction would require disproportionate scaffolding, document that tradeoff in `scenario-model.md` or `unresolved-issues.md` and use the smallest existing trustworthy check.
+
 ## Core operating loop
 
 For active implementation work, follow this loop:
@@ -58,18 +84,19 @@ For active implementation work, follow this loop:
 1. Re-state the working objective internally from the task-local config plus the user request.
 2. Inspect relevant code and prior notes from the active task workspace, shared lessons, shared project notes, and shared `user-profile.md`.
 3. Do not default to running the project just to observe the current state when the user has already provided enough signal. Use the user's report, logs, stack traces, baseline metrics, expected behavior, and code inspection first. Only do an exploratory run when that missing information is necessary and the cost is justified.
-4. Make the smallest changes that move the objective forward.
-5. Prefer the cheapest meaningful validation first:
+4. For bug fixes, identify the minimal trustworthy reproduction or explain why the existing evidence is sufficient before editing.
+5. Make the smallest changes that move the objective forward.
+6. Prefer the cheapest meaningful validation first:
    - run a small-unit compile, targeted test, or other narrow check around the changed code
    - use broader builds only when the narrow check passes or cannot prove the requirement
-6. Run the configured verifier after targeted validation, or sooner only when no smaller trustworthy check exists.
-7. After every run or verification attempt, update at least one maintained memory location with the outcome. Valid targets include task-local `current-status.md`, task-local `unresolved-issues.md`, shared `.code-dude/lessons/`, and shared `.code-dude/project-notes/`. Do not finish a run and leave all of them untouched.
-8. Record outcomes in the most appropriate places:
+7. Run the configured verifier after targeted validation, or sooner only when no smaller trustworthy check exists.
+8. After every run or verification attempt, update at least one maintained memory location with the outcome. Valid targets include task-local `current-status.md`, task-local `unresolved-issues.md`, shared `.code-dude/lessons/`, and shared `.code-dude/project-notes/`. Do not finish a run and leave all of them untouched.
+9. Record outcomes in the most appropriate places:
    - update `current-status.md` for latest phase, result, and next step
    - update `unresolved-issues.md` when the run exposes a blocker, gap, regression, or still-open question
    - update shared `lessons/` when the run teaches a reusable debugging or validation lesson
    - update shared `project-notes/` when the run reveals reusable repository facts, setup quirks, or safe operating guidance
-9. Repeat until the goal is satisfied or the remaining blocker requires user input.
+10. Repeat until the goal is satisfied or the remaining blocker requires user input.
 
 Always prefer evidence from the verifier over intuition.
 Do not stop to present a proposed implementation plan to the user unless user confirmation is actually required.
@@ -212,6 +239,12 @@ When creating a new task workspace, initialize it with:
 python3 code-dude/scripts/init_task.py --root /path/to/repo --task-id 20260424_fix_login_bug
 ```
 
+To inspect existing task workspaces quickly:
+
+```bash
+python3 code-dude/scripts/list_tasks.py --root /path/to/repo
+```
+
 ## Files to read selectively
 
 - For config field semantics, read `references/config-schema.md`.
@@ -221,7 +254,9 @@ python3 code-dude/scripts/init_task.py --root /path/to/repo --task-id 20260424_f
 ## Practical defaults
 
 - Prefer incremental edits over broad refactors.
+- Scan `.code-dude/tasks/` before choosing or creating the active task workspace.
 - For large repositories, prefer targeted compile or test commands before full builds and end-to-end verifier runs.
+- For bug fixes, consider a minimal reproduction before implementation edits, unless the user already supplied sufficient failure evidence.
 - If no suitable targeted check exists, add one in the normal test or build structure when practical, then use it during the edit loop.
 - When the user already provides sufficient baseline or current-state evidence, do not spend time on an initial exploratory run of the whole project.
 - After every run, update at least one of `current-status.md`, `unresolved-issues.md`, shared `lessons/`, or shared `project-notes/`.

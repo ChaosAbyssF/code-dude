@@ -13,7 +13,9 @@
 
 - 用任务目录内的 `config.yaml` 描述该任务的目标、验证入口、环境和注意事项
 - 在 `.code-dude/` 下区分共享信息与任务工作区，避免多任务时互相污染
+- 使用时先扫一眼已有任务列表，能判断是同一任务时复用现有 active task
 - 在根目录长期积累仓库级共享信息，而不是把这类信息混进单个任务记录里
+- 修复 bug 时优先考虑最小复现，再进入实现和验证循环
 - 检查验证脚本是否支持独立实验输出目录
 - 汇总实验目录并给出清理建议
 - 根据用户偏好调整执行方式，尤其记录用户明确禁止的操作
@@ -67,6 +69,12 @@ python3 /path/to/code-dude/scripts/init_project.py --root .
 python3 /path/to/code-dude/scripts/init_task.py --root . --task-id 20260424_fix_login_bug
 ```
 
+也可以在创建时直接写入任务摘要，方便之后扫描任务列表时判断是否应复用：
+
+```bash
+python3 /path/to/code-dude/scripts/init_task.py --root . --task-id 20260424_fix_login_bug --summary "Fix login failure" --success-definition "Login verifier passes"
+```
+
 再填写 `.code-dude/tasks/<task-id>/config.yaml`，至少补充：
 
 - `goal.summary`
@@ -85,15 +93,18 @@ python3 /path/to/code-dude/scripts/init_task.py --root . --task-id 20260424_fix_
 
 典型流程是：
 
-1. Codex 读取配置和仓库，确定或创建当前任务目录并建立场景理解
-2. 直接修改相关代码并运行验证
-3. 持续更新当前任务目录下的 `current-status.md` 和 `unresolved-issues.md`，并把经验教训沉淀到根目录的 `lessons/`，把仓库背景信息沉淀到 `project-notes/`
-4. 达成目标后生成简洁报告，并在用户明确确认完成时把任务目录重命名为 `<task-id>_done`
+1. Codex 先查看 `.code-dude/tasks/`，判断是否复用已有 active task，必要时创建新任务目录
+2. Codex 读取配置和仓库，建立场景理解
+3. 如果是 bug 修复，优先寻找已有失败用例、最小复现命令或创建窄测试
+4. 直接修改相关代码并运行验证
+5. 持续更新当前任务目录下的 `current-status.md` 和 `unresolved-issues.md`，并把经验教训沉淀到根目录的 `lessons/`，把仓库背景信息沉淀到 `project-notes/`
+6. 达成目标后生成简洁报告，并在用户明确确认完成时把任务目录重命名为 `<task-id>_done`
 
 ## 辅助脚本
 
 - `scripts/init_project.py`: 初始化项目侧 `.code-dude/`
 - `scripts/init_task.py`: 初始化某个任务工作区及其实际 markdown 文件
+- `scripts/list_tasks.py`: 汇总 `.code-dude/tasks/` 下已有任务，辅助选择当前任务目录
 - `scripts/check_verifier.py`: 检查验证入口是否支持隔离实验目录
 - `scripts/manage_trials.py`: 汇总实验目录并给出清理建议
 - `scripts/render_report.py`: 生成最终报告草稿
