@@ -111,6 +111,44 @@ Stop when the configured goal has been achieved according to the verifier or oth
 
 If the user confirms that the task is complete, rename the task workspace from `tasks/<task-id>/` to `tasks/<task-id>_done/`. Do this only after explicit user confirmation, not merely because the verifier passed.
 
+## User dissatisfaction and cleanup
+
+When the user explicitly says they are dissatisfied with Codex's execution, especially near the end of a task, treat that as a corrective workflow rather than a normal completion signal.
+
+First identify what Codex changed during the task:
+
+- implementation files, tests, configs, and other repository files
+- generated or updated skill documents under `.code-dude/`, including task-local `scenario-model.md`, `current-status.md`, `unresolved-issues.md`, `reports/`, shared `project-notes/`, and shared `user-profile.md`
+- shared lesson entries under `.code-dude/lessons/`
+- verifier outputs, trial directories, temporary artifacts, and helper files created for the task
+
+Then consider whether code rollback is appropriate, but do not destructively reset unrelated user work. Prefer targeted reverse patches for Codex-authored changes, and ask before deleting or reverting anything when ownership is unclear.
+
+Also clean up skill-generated documents that no longer reflect an accepted task outcome. In particular:
+
+- remove or revise final reports, stale task summaries, and task-local status documents that present the rejected work as successful
+- remove task-local generated documents when the whole task workspace only represents the rejected attempt and the user has not asked to preserve it
+- keep `config.yaml` when it contains user-maintained task intent unless the user asks to delete the task workspace
+- do not silently erase useful evidence of the failure; preserve a concise note when it helps explain what was rejected or rolled back
+
+Update `.code-dude/lessons/` promptly with the reusable lesson from the dissatisfaction, such as the rejected assumption, forbidden action, cleanup expectation, or validation gap that led to the bad outcome. If an existing lesson caused or encouraged the mistake, revise or remove it instead of adding a contradictory new entry. If the user states a stable preference or forbidden action, update `.code-dude/user-profile.md` as well.
+
+Do not rename the task workspace to `_done` after a dissatisfaction signal unless the user later explicitly confirms that the corrective cleanup or rollback is complete.
+
+## Missing logged files
+
+When task logs, status files, reports, lessons, or project notes refer to a repository file that no longer exists, do not assume it is merely an accidental missing path. First consider that the user may have manually deleted the file because they did not accept Codex's update to it.
+
+Before recreating, re-editing, or relying on that path:
+
+- check recent context and git status to determine whether Codex created or modified the file
+- treat a user-deleted Codex-authored file as a rejection of that file's update unless the user says otherwise
+- avoid recreating the file automatically just because a prior task note mentions it
+- update `current-status.md` or `unresolved-issues.md` to reflect that the file disappeared and may have been intentionally removed
+- update shared lessons when the disappearance reveals a reusable mistake about file ownership, generated artifacts, or user acceptance
+
+If the missing file is required for the task to proceed, explain the dependency and ask before restoring it when user intent is unclear.
+
 ## Verifier policy
 
 The task-local `config.yaml` contains `verification.entrypoint`. Treat it as the source of truth for success checks unless the user explicitly overrides it.
@@ -261,6 +299,8 @@ python3 code-dude/scripts/list_tasks.py --root /path/to/repo
 - When the user already provides sufficient baseline or current-state evidence, do not spend time on an initial exploratory run of the whole project.
 - After every run, update at least one of `current-status.md`, `unresolved-issues.md`, shared `lessons/`, or shared `project-notes/`.
 - After every user message, explicitly consider whether shared `user-profile.md` should be updated.
+- If the user is explicitly dissatisfied with Codex's execution, consider targeted rollback, clean stale skill-generated documents, update lessons, and do not mark the task done.
+- If a logged file no longer exists, consider that the user may have manually rejected that file's update before recreating it.
 - Keep `scenario-model.md`, `current-status.md`, and `unresolved-issues.md` as markdown files in the task workspace instead of creating tiny one-file directories.
 - Use date-prefixed names for both task directories and task-local files when practical.
 - When a task is explicitly confirmed complete by the user, rename its directory to append `_done`.
